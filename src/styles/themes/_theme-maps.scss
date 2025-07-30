@@ -1,0 +1,62 @@
+
+
+$light-theme: (
+
+  background: #{$white},
+  surface: #{$gray-50},
+  surface-elevated: #{$white},
+  
+  text-primary: #{$gray-900},
+  text-secondary: #{$gray-600},
+  text-disabled: #{$gray-400},
+  text-inverse: #{$white},
+  
+
+  border-light: #{$gray-200},
+  border-base: #{$gray-300},
+  border-dark: #{$gray-400},
+  
+
+  interactive-primary: #{$primary-blue},
+  interactive-primary-hover: #{$primary-blue-hover},
+  interactive-primary-active: #{$primary-blue-active},
+  
+
+  rock: #{$rock-color},
+  paper: #{$gray-100},
+  scissors: #{$scissors-color},
+  
+  success: #{$success},
+  warning: #{$warning},
+  error: #{$error},
+  info: #{$info}
+);
+
+$dark-theme: (
+  background: #{$gray-900},
+  surface: #{$gray-800},
+  surface-elevated: #{$gray-700},
+  
+
+  text-primary: #{$white},
+  text-secondary: rgba(255, 255, 255, 0.65),
+  text-disabled: rgba(255, 255, 255, 0.35),
+  text-inverse: #{$gray-900},
+  
+  border-light: #{$gray-700},
+  border-base: #{$gray-600},
+  border-dark: #{$gray-500},
+  
+  interactive-primary: #{$primary-blue},
+  interactive-primary-hover: #{$primary-blue-hover},
+  interactive-primary-active: #{$primary-blue-active},
+  
+  rock: lighten($rock-color, 20%),
+  paper: #{$gray-300},
+  scissors: lighten($scissors-color, 30%),
+  
+  success: #{$success},
+  warning: #{$warning},
+  error: #{$error},
+  info: #{$info}
+); 

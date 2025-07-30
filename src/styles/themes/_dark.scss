@@ -1,0 +1,12 @@
+
+[data-theme="dark"] {
+  @each $property, $value in $dark-theme {
+    --#{$property}-color: #{$value};
+  }
+  
+
+  --ant-primary-color: #{$primary-blue};
+  --ant-success-color: #{$success};
+  --ant-warning-color: #{$warning};
+  --ant-error-color: #{$error};
+}
