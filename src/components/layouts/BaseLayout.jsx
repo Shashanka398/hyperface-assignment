@@ -1,7 +1,7 @@
 import React from 'react';
 import { Layout, Switch, Space, Typography } from 'antd';
-import { BulbOutlined, BulbFilled } from '@ant-design/icons';
-import { useTheme } from '../../hooks/useTheme';
+import { MoonFilled, SunFilled } from '@ant-design/icons';
+import { useTheme } from '../../contexts/ThemeContext';
 import './BaseLayout.css';
 
 const { Header, Content } = Layout;
@@ -16,19 +16,18 @@ const BaseLayout = ({ children }) => {
         <div className="header-container">
           <div className="header-left">
             <Title level={2} className="app-title">
-              🎮 Rock Paper Scissors
+              🎮  Hyper Clash
             </Title>
           </div>
           
           <div className="header-right">
             <Space align="center" size="middle">
               <Space align="center" size="small">
-                <BulbOutlined style={{ color: isDark ? '#faad14' : '#1890ff' }} />
                 <Switch
                   checked={isDark}
                   onChange={toggleTheme}
-                  checkedChildren={<BulbFilled />}
-                  unCheckedChildren={<BulbOutlined />}
+                  checkedChildren={<MoonFilled />}
+                  unCheckedChildren={<SunFilled />}
                   size="default"
                 />
               </Space>

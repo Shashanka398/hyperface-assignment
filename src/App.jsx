@@ -1,13 +1,14 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ConfigProvider, theme as antdTheme } from 'antd';
-import { useTheme } from './hooks/useTheme';
+import { ConfigProvider, theme as antdTheme, Button } from 'antd';
+import { useTheme, ThemeProvider } from './contexts/ThemeContext';
 import  AuthProvider from './contexts/AuthContext.jsx';
 import BaseLayout from './components/layouts/BaseLayout';
 import AuthGuard from './components/auth/AuthGuard';
 import Login from './pages/Login';
-import GameLobby from './pages/GameLobby';
+import GameLobby from './pages/GameLobby/GameLobby.jsx';
+import Game from './pages/Game.jsx';
 import './styles/components/game.css';
 import './styles/components/forms.css';
 import './styles/components/leaderboard.css';
@@ -41,6 +42,7 @@ function AppContent() {
       },
       Card: {
         borderRadius: 12,
+        bodyPadding:12,
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
       },
       Input: {
@@ -73,6 +75,16 @@ function AppContent() {
                   </BaseLayout>
                 </AuthGuard>
               } 
+            />
+            <Route 
+              path="/game/:sessionId" 
+              element={
+                <AuthGuard requireAuth={true}>
+                  <BaseLayout>
+                    <Game />
+                  </BaseLayout>
+                </AuthGuard>
+              } 
             />            
             <Route path="/" element={<Navigate to="/lobby" replace />} />            
             <Route path="*" element={<Navigate to="/lobby" replace />} />
@@ -84,7 +96,11 @@ function AppContent() {
 }
 
 function App() {
-  return <AppContent />;
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  );
 }
 
 export default App;

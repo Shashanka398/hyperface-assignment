@@ -79,7 +79,6 @@ body {
 .paper { background: #f8f9fa; border: 2px solid var(--border-color); }
 .scissors { background: #c0c0c0; color: white; }
 
-/* Responsive */
 @media (max-width: 768px) {
   .container { padding: 0 16px; }
   .game-btn { width: 60px; height: 60px; font-size: 18px; }
@@ -145,7 +144,7 @@ body {
 
 
 .game-container {
-  max-width: 800px;
+  width: 100%;
   margin: 0 auto;
 }
 

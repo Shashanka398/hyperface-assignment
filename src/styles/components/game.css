@@ -1,6 +1,6 @@
 
 .game-container {
-  max-width: 800px;
+   width: 100%;
   margin: 0 auto;
 }
 
@@ -16,7 +16,7 @@
 .player-card {
   background: var(--bg-card);
   border-radius: 12px;
-  padding: 24px;
+  padding: 16px;
   box-shadow: var(--shadow);
   border: 1px solid var(--border-color);
   text-align: center;
@@ -137,6 +137,8 @@
 .result-text.draw {
   color: var(--warning-color);
 }
+
+
 
 /* Responsive */
 @media (max-width: 768px) {
