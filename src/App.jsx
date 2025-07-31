@@ -9,9 +9,11 @@ import AuthGuard from './components/auth/AuthGuard';
 import Login from './pages/Login';
 import GameLobby from './pages/GameLobby/GameLobby.jsx';
 import Game from './pages/Game.jsx';
-import './styles/components/game.css';
-import './styles/components/forms.css';
-import './styles/components/leaderboard.css';
+import './styles/BaseLayout.css';
+import './styles/forms.css';
+import './styles/game.css';
+import './styles/index.css'
+import './styles/leaderboard.css';
 
 function AppContent() {
   const { isDark } = useTheme();

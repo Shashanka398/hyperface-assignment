@@ -3,6 +3,7 @@ import { Card, Input, Button, Typography, Space } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { useLogin } from '../hooks/useLogin';
 import { Error, ButtonLoading } from '../components/ui';
+import Logo from "../components/ui/Logo";
 
 const { Title, Text } = Typography;
 
@@ -32,8 +33,9 @@ const Login = () => {
       <Card className="login-card">
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div style={{ textAlign: 'center' }}>
+            <Logo/>
             <Title level={2} className="login-title">
-              🎮 Join the Game
+             Join the Game
             </Title>
             <Text type="secondary" className="login-subtitle">
               Enter a unique username to start playing Rock Paper Scissors

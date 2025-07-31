@@ -2,10 +2,13 @@ import React from 'react';
 import { Layout, Switch, Space, Typography } from 'antd';
 import { MoonFilled, SunFilled } from '@ant-design/icons';
 import { useTheme } from '../../contexts/ThemeContext';
-import './BaseLayout.css';
+import Logo from '../ui/Logo';
+
+import '../../styles/BaseLayout.css';
 
 const { Header, Content } = Layout;
 const { Title } = Typography;
+
 
 const BaseLayout = ({ children }) => {
   const { isDark, toggleTheme } = useTheme();
@@ -15,8 +18,9 @@ const BaseLayout = ({ children }) => {
       <Header className="base-header">
         <div className="header-container">
           <div className="header-left">
+            <Logo />
             <Title level={2} className="app-title">
-              🎮  Hyper Clash
+               Hyper Clash
             </Title>
           </div>
           
