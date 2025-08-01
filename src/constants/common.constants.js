@@ -34,6 +34,8 @@ export const STORAGE_KEYS = {
   GAME_STATE: 'rps_game_state'
 };
 
+
+export const THEME_KEY='theme';
 export const TIME_CONSTANTS = {
   CHALLENGE_EXPIRY: 2 * 60 * 1000, 
   GAME_SESSION_CHECK_INTERVAL: 3000,
