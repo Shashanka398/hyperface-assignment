@@ -210,7 +210,6 @@ class GameStateManager {
       throw new Error(ERROR_MESSAGES.PLAYERS_MUST_BE_ONLINE);
     }
 
-    // Check if either player is already in a game
     const challengerActiveGame = this.getActiveGameSession(challengerUsername);
     const challengedActiveGame = this.getActiveGameSession(challengedUsername);
 
@@ -219,7 +218,6 @@ class GameStateManager {
     }
 
     if (challengedActiveGame) {
-      // Add challenger to waiting queue for this specific opponent
       this.addToWaitingQueue(challengerUsername, challengedUsername);
       throw new Error(`${challengedUsername} is currently in a game. You've been added to the waiting list.`);
     }
@@ -243,9 +241,9 @@ class GameStateManager {
       id: challengeId,
       challenger: challengerUsername,
       challenged: challengedUsername,
-      status: CHALLENGE_STATUS.PENDING, // pending, accepted, rejected, expired
+      status: CHALLENGE_STATUS.PENDING, 
       createdAt: Date.now(),
-      expiresAt: Date.now() + TIME_CONSTANTS.CHALLENGE_EXPIRY, // 2 minutes
+      expiresAt: Date.now() + TIME_CONSTANTS.CHALLENGE_EXPIRY, 
     };
 
     const newState = {
@@ -526,10 +524,8 @@ class GameStateManager {
       Object.entries(gameSessions).filter(([, session]) => {
         if (session.status === GAME_SESSION_STATUS.ACTIVE) {
           return true; 
-        }
-        
+        }        
         if (session.status === GAME_SESSION_STATUS.COMPLETED && session.completedAt) {
-          // Keep completed games for 1 hour for reference
           return (now - session.completedAt) < ONE_HOUR;
         }
         
@@ -548,7 +544,6 @@ class GameStateManager {
     }
   }
 
-  // Force immediate status update across all tabs
   forceStatusUpdate() {
     window.dispatchEvent(new StorageEvent('storage', {
       key: this.storageKey,
@@ -707,7 +702,6 @@ class GameStateManager {
 
   determineWinner(choice1, choice2) {
     if (choice1 === choice2) return GAME_RESULTS.DRAW;
-    
     return WIN_CONDITIONS[choice1] === choice2 ? GAME_RESULTS.WIN : GAME_RESULTS.LOSE;
   }
 }
