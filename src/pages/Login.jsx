@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Input, Button, Typography, Space } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { useLogin } from '../hooks/useLogin';
-import { Error, ButtonLoading } from '../components/ui';
+import { Error, ButtonLoading,Rules } from '../components/ui';
 import Logo from "../components/ui/Logo";
 
 const { Title, Text } = Typography;
@@ -82,15 +82,7 @@ const Login = () => {
             </Space>
           </form>
           
-          <div className="login-rules">
-            <Title level={5}>Game Rules:</Title>
-            <ul style={{ textAlign: 'left', color: 'var(--text-secondary)' }}>
-              <li>Rock beats Scissors</li>
-              <li>Scissors beats Paper</li>
-              <li>Paper beats Rock</li>
-              <li>Each tab is a separate player</li>
-            </ul>
-          </div>
+          <Rules/>
         </Space>
       </Card>
     </div>

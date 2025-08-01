@@ -1,30 +1,31 @@
 import React, { useState, useEffect } from "react";
-import {
-  Card,
-  Typography,
-  Space,
-  message,
-  Badge
-} from "antd";
+import { Card, Typography, Space, message, Badge } from "antd";
 import {
   TrophyOutlined,
   ClockCircleOutlined,
-  UsergroupAddOutlined
+  UsergroupAddOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { gameState } from "../../utils/gameState";
 import { crossTabSync } from "../../utils/crossTabSync";
 import { useChallengeNotifications } from "../../components/ui/ChallengeNotification";
-import { PageLoading, CardLoading, InlineError, OverlayLoading } from "../../components/ui";
-import { TIME_CONSTANTS } from "../../constants/common.constants.js";
-import OnlinePlayer from "./OnlinePlayer";
+import {
+  PageLoading,
+  CardLoading,
+  InlineError,
+  CardEmptyState,
+  OverlayLoading,
+} from "../../components/ui";
+import { TIME_CONSTANTS, ERROR_MESSAGES, NOTIFICATION_MESSAGES } from "../../constants/common.constants.js";
+import OnlinePlayers from "./OnlinePlayer";
 import LeaderBoard from "./LeaderBoard";
 import PendingChallenges from "./PendingChallenges";
 import WaitingQueue from "./WaitingQueue";
-import WelcomeCard from "./WelcomeCard"
+import WelcomeCard from "./WelcomeCard";
 
-const {  Text } = Typography;
+const { Text } = Typography;
 
 const GameLobby = () => {
   const { user } = useAuth();
@@ -37,19 +38,18 @@ const GameLobby = () => {
   const [loadError, setLoadError] = useState(null);
   const [challengeLoading, setChallengeLoading] = useState(false);
 
-  const { pendingChallenges, requestPermission, showPushNotification } =
-    useChallengeNotifications(user, gameState, crossTabSync);
-
+  const { pendingChallenges } = useChallengeNotifications(
+    user,
+    gameState,
+    crossTabSync
+  );
   useEffect(() => {
     loadGameData();
-    if (requestPermission) {
-      requestPermission();
-    }
 
     if (user) {
       const activeSession = gameState.getActiveGameSession(user.username);
       if (activeSession) {
-        message.info("Continuing your active game...");
+        message.info(NOTIFICATION_MESSAGES.GAME_STARTED);
         navigate(`/game/${activeSession.id}`);
         return;
       }
@@ -58,12 +58,12 @@ const GameLobby = () => {
     const unsubscribe = crossTabSync.subscribe(() => {
       gameState.cleanupCompletedGames();
       loadGameData();
-      
+
       if (user) {
         const activeSession = gameState.getActiveGameSession(user.username);
         if (activeSession) {
           setTimeout(() => {
-            message.success("Challenge accepted! Starting game...");
+            message.success(NOTIFICATION_MESSAGES.CHALLENGE_ACCEPTED);
             window.location.href = `/game/${activeSession.id}`;
           }, 100);
         }
@@ -74,18 +74,18 @@ const GameLobby = () => {
       loadGameData();
     };
 
-    window.addEventListener('focus', handleFocus);
+    window.addEventListener("focus", handleFocus);
     return () => {
       unsubscribe();
-      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener("focus", handleFocus);
     };
   }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      loadGameData(); 
-      gameState.cleanupExpiredChallenges(); 
-      gameState.cleanupCompletedGames(); 
+      loadGameData();
+      gameState.cleanupExpiredChallenges();
+      gameState.cleanupCompletedGames();
       setRefreshKey((prev) => prev + 1);
     }, TIME_CONSTANTS.DATA_REFRESH_INTERVAL);
 
@@ -98,19 +98,22 @@ const GameLobby = () => {
     const checkGameSession = () => {
       const activeSession = gameState.getActiveGameSession(user.username);
       if (activeSession) {
-        message.info("Game session found! Joining...");
+        message.info(NOTIFICATION_MESSAGES.GAME_STARTED);
         window.location.href = `/game/${activeSession.id}`;
       }
     };
     checkGameSession();
-    const gameSessionInterval = setInterval(checkGameSession, TIME_CONSTANTS.GAME_SESSION_CHECK_INTERVAL);
+    const gameSessionInterval = setInterval(
+      checkGameSession,
+      TIME_CONSTANTS.GAME_SESSION_CHECK_INTERVAL
+    );
     return () => clearInterval(gameSessionInterval);
   }, [user?.username]);
 
   const loadGameData = async () => {
     try {
       setLoadError(null);
-      gameState.cleanupCompletedGames();    
+      gameState.cleanupCompletedGames();
       const players = gameState.getOnlinePlayers();
       const leaderboardData = gameState.getLeaderboard();
       const queueData = gameState.getWaitingQueue();
@@ -118,13 +121,12 @@ const GameLobby = () => {
       setLeaderboard(leaderboardData);
       setWaitingQueue(queueData);
     } catch (error) {
-      console.error('Failed to load game data:', error);
-      setLoadError('Failed to load game data. Please try again.');
+      console.error("Failed to load game data:", error);
+      setLoadError("Failed to load game data. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
-
 
   const handleChallengePlayer = async (player) => {
     try {
@@ -135,25 +137,17 @@ const GameLobby = () => {
       );
 
       message.success({
-        content: `Challenge sent to ${player.username}! They have 2 minutes to respond.`,
+        content: NOTIFICATION_MESSAGES.CHALLENGE_SENT,
         duration: 3,
       });
-
-      showPushNotification(
-        "New Challenge!",
-        `${user.username} wants to play Rock Paper Scissors with you!`,
-        "/vite.svg"
-      );
 
       setTimeout(() => {
         const state = gameState.getState();
         const currentChallenge = state.challenges?.[challenge.id];
         if (currentChallenge && currentChallenge.status === "pending") {
-          message.info(`Challenge to ${player.username} expired.`);
+          message.info(ERROR_MESSAGES.CHALLENGE_EXPIRED);
         } else if (currentChallenge && currentChallenge.status === "accepted") {
-          message.success(
-            `${player.username} accepted your challenge! Starting game...`
-          );
+          message.success(NOTIFICATION_MESSAGES.CHALLENGE_ACCEPTED);
         }
       }, 2 * 60 * 1000);
     } catch (error) {
@@ -166,12 +160,10 @@ const GameLobby = () => {
     }
   };
 
-
-
   const handleAcceptChallenge = async (challengeId) => {
     try {
       const result = gameState.acceptChallenge(challengeId, user.username);
-      message.success("Challenge accepted! Starting game...");
+      message.success(NOTIFICATION_MESSAGES.CHALLENGE_ACCEPTED);
       navigate(`/game/${result.gameSessionId}`);
       setTimeout(() => {
         const currentState = gameState.getState();
@@ -183,18 +175,16 @@ const GameLobby = () => {
         );
       }, 100);
     } catch (error) {
-      message.error(`Failed to accept challenge: ${error.message}`);
+      message.error(`${ERROR_MESSAGES.CHALLENGE_NOT_FOUND}: ${error.message}`);
     }
   };
-
-
 
   const handleRejectChallenge = async (challengeId) => {
     try {
       gameState.rejectChallenge(challengeId, user.username);
-      message.info("Challenge rejected.");
+      message.info(NOTIFICATION_MESSAGES.CHALLENGE_REJECTED);
     } catch (error) {
-      message.error(`Failed to reject challenge: ${error.message}`);
+      message.error(`${ERROR_MESSAGES.CHALLENGE_NOT_FOUND}: ${error.message}`);
     }
   };
 
@@ -209,10 +199,10 @@ const GameLobby = () => {
   return (
     <div className="game-container">
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
-        <WelcomeCard/>
-        
+        <WelcomeCard />
+
         {loadError && (
-          <InlineError 
+          <InlineError
             title={loadError}
             onRetry={() => {
               setIsLoading(true);
@@ -221,22 +211,23 @@ const GameLobby = () => {
           />
         )}
         <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "2fr 1fr",
-            gap: "24px",
-          }}
+          className="lobby-container"
         >
           <Card
             title={
               <Space>
                 <UsergroupAddOutlined />
-                <span>Players Online   <Badge count={onlinePlayers.length - 1} /></span>
+                <span>
+                  Players Online <Badge count={onlinePlayers.length - 1} />
+                </span>
               </Space>
             }
             size="large"
           >
-            <OverlayLoading spinning={challengeLoading} message="Sending challenge...">
+            <OverlayLoading
+              spinning={challengeLoading}
+              message="Sending challenge..."
+            >
               <Space
                 direction="vertical"
                 style={{ width: "100%", height: "100%" }}
@@ -244,53 +235,36 @@ const GameLobby = () => {
                 <div style={{ overflowY: "auto" }}>
                   <Space
                     direction="vertical"
-                    style={{ width: "100%" ,maxHeight: "600px" , padding:"16px"}}
+                    style={{
+                      width: "100%",
+                      maxHeight: "600px",
+                      padding: "16px",
+                    }}
                     size="small"
                   >
-                    {onlinePlayers.filter((player)=>player.username !==user.username ).length > 0 ? (
-                      onlinePlayers.filter((player)=>player.username !==user.username ).map((player) => {
-                        const isPlayerInGame = gameState.isPlayerInActiveGame(player.username);
-                        return (
-                          <OnlinePlayer
-                            key={player.username}
-                            player={player}
-                            currentUser={user}
-                            isInGame={isPlayerInGame}
-                            onClick={handleChallengePlayer}
-                          />
-                        );
-                      })
+                  {
+                    onlinePlayers.length > 1 ? (
+                      <OnlinePlayers
+                        onlinePlayers={onlinePlayers}
+                        onClick={handleChallengePlayer}
+                        currentUser={user}
+                      />
                     ) : (
-                      <div style={{ textAlign: "center", padding: "20px" }}>
-                        <Text type="secondary">No other players online</Text>
-                      </div>
-                    )}
+                      <CardEmptyState 
+                        title="No players online"
+                        discription="Please wait for some time some warrior may come"
+                        icon={<UserOutlined />}
+                      />
+                    )
+                  }
+                  
                   </Space>
                 </div>
               </Space>
             </OverlayLoading>
           </Card>
           <Space direction="vertical">
-
-            {/* LeaderBoard */}
-            <Card
-              title={
-                <Space>
-                  <TrophyOutlined />
-                  <span> Leaderboard</span>
-                </Space>
-              }
-            >
-              <div style={{ maxHeight: "260px", overflowY: "auto", padding:"16px" }}>
-                {leaderboard.length > 0 ? (
-                  <LeaderBoard leaderboard={leaderboard} currentUser={user} />
-                ) : (
-                  <CardLoading skeletonProps={{ rows: 3, avatar: true }} />
-                )}
-              </div>
-            </Card>
-
-              {/* Challenges & queue */}
+                {/* Challenges & queue */}
             <Card
               title={
                 <Space>
@@ -299,22 +273,43 @@ const GameLobby = () => {
                 </Space>
               }
             >
-              <div style={{ maxHeight: "60vh", overflowY: "auto"}}>
-                <PendingChallenges 
+              <div style={{ height: "300px", overflowY: "auto" }}>
+                <PendingChallenges
                   pendingChallenges={pendingChallenges}
                   onAcceptChallenge={handleAcceptChallenge}
                   onRejectChallenge={handleRejectChallenge}
                 />
-                <WaitingQueue 
-                  waitingQueue={waitingQueue}
-                  currentUser={user}
-                />
-                {pendingChallenges.length === 0 && 
-                 waitingQueue.filter(q => q.waitingPlayer === user?.username || q.targetPlayer === user?.username).length === 0 && (
-                  <div style={{ textAlign: "center", padding: "20px" }}>
-                    <Text type="secondary">No pending challenges or waiting queue</Text>
-                  </div>
-                )}
+                <WaitingQueue waitingQueue={waitingQueue} currentUser={user} />
+                {pendingChallenges.length === 0 &&
+                  waitingQueue.filter(
+                    (q) =>
+                      q.waitingPlayer === user?.username ||
+                      q.targetPlayer === user?.username
+                  ).length === 0 && (
+                    <CardEmptyState 
+                      title="No pending challenges"
+                      discription="Challenge other players to start a game!"
+                      icon={<ClockCircleOutlined />}
+                    />
+                  )}
+              </div>
+            </Card>
+            <Card
+              title={
+                <Space>
+                  <TrophyOutlined />
+                  <span> Leaderboard</span>
+                </Space>
+              }
+            >
+              <div
+                style={{
+                  height: "300px",
+                  overflowY: "auto",
+                  padding: "16px",
+                }}
+              >
+                 <LeaderBoard leaderboard={leaderboard} currentUser={user} />
               </div>
             </Card>
           </Space>

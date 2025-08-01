@@ -1,5 +1,7 @@
 import React from "react";
 import { Card, Typography, Space } from "antd";
+import { NOTIFICATION_MESSAGES } from "../../constants/common.constants";
+import {TrophyOutlined} from '@ant-design/icons'
 
 const { Text } = Typography;
 
@@ -13,12 +15,22 @@ const WaitingQueue = ({ waitingQueue, currentUser }) => {
     return null;
   }
 
+  if (!hasAnyQueue) {
+    return (
+      <div style={{ textAlign: "center", padding: "20px" }}>
+        <Text type="secondary">
+          No pending challenges or waiting queue
+        </Text>
+      </div>
+    );
+  }
+
   return (
     <>
       {userWaitingQueue.length > 0 && (
         <div style={{ marginBottom: "16px" }}>
           <Text strong style={{ fontSize: "14px", color: "var(--warning-color)" }}>
-            You're Waiting For
+                              {NOTIFICATION_MESSAGES.YOURE_WAITING_FOR}
           </Text>
           <Space
             direction="vertical"
@@ -33,7 +45,7 @@ const WaitingQueue = ({ waitingQueue, currentUser }) => {
               >
                 <div>
                   <Text style={{ fontSize: "14px" }}>
-                    Waiting for {queueItem.targetPlayer} to finish their game
+                    {NOTIFICATION_MESSAGES.WAITING_FOR_PLAYER.replace('{player}', queueItem.targetPlayer)}
                   </Text>
                   <div style={{ marginTop: "4px" }}>
                     <Text type="secondary" style={{ fontSize: "11px" }}>
@@ -50,7 +62,7 @@ const WaitingQueue = ({ waitingQueue, currentUser }) => {
       {playersWaitingForUser.length > 0 && (
         <div style={{ marginBottom: "16px" }}>
           <Text strong style={{ fontSize: "14px", color: "var(--success-color)" }}>
-            Players Waiting for You
+                              {NOTIFICATION_MESSAGES.PLAYERS_WAITING_FOR_YOU}
           </Text>
           <Space
             direction="vertical"
@@ -65,7 +77,7 @@ const WaitingQueue = ({ waitingQueue, currentUser }) => {
               >
                 <div>
                   <Text style={{ fontSize: "14px" }}>
-                    {queueItem.waitingPlayer} is waiting for you
+                    {NOTIFICATION_MESSAGES.PLAYER_WAITING_FOR_YOU.replace('{player}', queueItem.waitingPlayer)}
                   </Text>
                   <div style={{ marginTop: "4px" }}>
                     <Text type="secondary" style={{ fontSize: "11px" }}>

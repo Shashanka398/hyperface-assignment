@@ -56,16 +56,27 @@ export const ERROR_MESSAGES = {
   GAME_SESSION_NOT_FOUND: 'Game session not found',
   PLAYER_NOT_IN_GAME: 'Player not in this game session',
   GAME_NOT_ACTIVE: 'Game session is not active',
-  CHOICE_ALREADY_MADE: 'Player has already made a choice'
-};
+  FAILED_TO_LOAD:'Failed to load game session',
+  CHOICE_ALREADY_MADE: 'Player has already made a choice',
+  FAILED_TO_CHOICE:'Failed to make choice:',
+  GAME_EXPIRED:'The game session your`e looking for doesn`t exist or has expired.',
+}
 
 export const NOTIFICATION_MESSAGES = {
   CHALLENGE_ERROR: 'Challenge Error',
   CHALLENGE_SENT: 'Challenge sent successfully',
   CHALLENGE_ACCEPTED: 'Challenge accepted',
   CHALLENGE_REJECTED: 'Challenge rejected',
-  GAME_STARTED: 'Game started',
-  GAME_COMPLETED: 'Game completed'
+  GAME_STARTED: 'Entering game arena....',
+  GAME_COMPLETED: 'Game completed',
+  GAME_CHOICE_DONE:'Choice made! Waiting for opponent...',
+  YOU_WIN: 'You Win!',
+  YOU_LOSE: 'You Lose!',
+  ITS_A_DRAW: 'It\'s a Draw!',
+  WAITING_FOR_PLAYER: 'Waiting for {player} to finish their game',
+  PLAYER_WAITING_FOR_YOU: '{player} is waiting for you',
+  YOURE_WAITING_FOR: 'You\'re Waiting For',
+  PLAYERS_WAITING_FOR_YOU: 'Players Waiting for You',
 };
 
 export const INITIAL_PLAYER_STATS = {
@@ -89,3 +100,10 @@ export const DEFAULT_STATE = {
   gameSessions: {},
   lastUpdated: null
 };
+
+
+  export const choices = [
+    { id: 'rock', emoji: '🪨', name: 'Rock' },
+    { id: 'paper', emoji: '📄', name: 'Paper' },
+    { id: 'scissors', emoji: '✂️', name: 'Scissors' }
+  ];

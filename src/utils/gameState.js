@@ -112,10 +112,7 @@ class GameStateManager {
   removePlayer(username) {
     const state = this.getState();
     const { [username]: _removed, ...remainingPlayers } = state.players;
-
-    // Also remove player from waiting queue
     this.removeFromWaitingQueue(username);
-
     this.setState({
       ...state,
       players: remainingPlayers,
@@ -174,7 +171,7 @@ class GameStateManager {
               )
             : 0,
       }))
-      .sort((a, b) => {
+      .filter((player)=>player.wins>0).sort((a, b) => {
         if (b.wins !== a.wins) return b.wins - a.wins;
         if (b.winRate !== a.winRate) return b.winRate - a.winRate;
         return b.gamesPlayed - a.gamesPlayed;

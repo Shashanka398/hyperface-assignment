@@ -2,6 +2,7 @@ import React from 'react';
 import {  Typography, Space, Badge, Tag } from 'antd';
 import { TrophyOutlined, UserOutlined } from '@ant-design/icons';
 import {getRankIcon,getRankClass,getWinColor} from "../../utils/common-util"
+import { CardEmptyState } from "../../components/ui";
 
 const { Text } = Typography;
 
@@ -11,15 +12,11 @@ const LeaderBoard = ({ leaderboard, currentUser }) => {
   if (!leaderboard || leaderboard.length === 0) {
     return (
       <div className="leaderboard-container">
-        <div className="empty-leaderboard">
-          <TrophyOutlined style={{ fontSize: '48px', color: 'var(--text-secondary)', marginBottom: '16px' }} />
-          <Text type="secondary" style={{ fontSize: '16px', display: 'block' }}>
-            No players yet
-          </Text>
-          <Text type="secondary" style={{ fontSize: '14px' }}>
-            Be the first to join and start playing!
-          </Text>
-        </div>
+        <CardEmptyState 
+          title="No players yet"
+          discription="Be the first to join and start playing!"
+          icon={<TrophyOutlined />}
+        />
       </div>
     );
   }
@@ -39,21 +36,14 @@ const LeaderBoard = ({ leaderboard, currentUser }) => {
                 background: isCurrentUser ? 'var(--bg-secondary)' : 'transparent',
                 border: isCurrentUser ? '1px solid var(--primary-color)' : 'none',
                 borderRadius: isCurrentUser ? '8px' : '0',
-                padding: isCurrentUser ? '12px 16px' : '12px 0'
+                padding:'12px 16px' 
               }}
             >
               <div className="player-info">
                 <div className={`player-rank ${getRankClass(rank)}`}>
                   {getRankIcon(rank)}
                 </div>
-                
                 <Space>
-                  <Badge 
-                    status={player.isOnline ? 'success' : 'default'} 
-                    dot 
-                    style={{ fontSize: '8px' }}
-                  />
-                  <UserOutlined style={{ color: 'var(--text-secondary)', fontSize: '14px' }} />
                   <Text 
                     className="player-name" 
                     strong={isCurrentUser}
