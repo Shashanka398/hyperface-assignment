@@ -1,4 +1,3 @@
-import { notification } from "antd";
 import {
   GAME_RESULTS,
   CHALLENGE_STATUS,
@@ -7,13 +6,10 @@ import {
   WIN_CONDITIONS,
   STORAGE_KEYS,
   TIME_CONSTANTS,
-  SCORE_POINTS,
   ERROR_MESSAGES,
-  NOTIFICATION_MESSAGES,
   INITIAL_PLAYER_STATS,
-  ID_PREFIXES,
-  DEFAULT_STATE,
-} from "../constants/common.constants.js";
+  ID_PREFIXES
+} from '../constants/common.constants.js';
 
 class GameStateManager {
   constructor() {
@@ -25,7 +21,11 @@ class GameStateManager {
     const existing = this.getState();
     if (!existing.players) {
       this.setState({
-        ...DEFAULT_STATE,
+        players: {},
+        leaderboard: [],
+        challenges: {},
+        gameSessions: {},
+        waitingQueue: [],
         lastUpdated: Date.now(),
       });
     }
@@ -39,16 +39,27 @@ class GameStateManager {
         if (!parsedState.gameSessions) {
           parsedState.gameSessions = {};
         }
+        if (!parsedState.waitingQueue) {
+          parsedState.waitingQueue = [];
+        }
         return parsedState;
       }
       return {
-        ...DEFAULT_STATE,
+        players: {},
+        leaderboard: [],
+        challenges: {},
+        gameSessions: {},
+        waitingQueue: [],
         lastUpdated: Date.now(),
       };
     } catch (error) {
       console.error("Error getting game state:", error);
       return {
-        ...DEFAULT_STATE,
+        players: {},
+        leaderboard: [],
+        challenges: {},
+        gameSessions: {},
+        waitingQueue: [],
         lastUpdated: Date.now(),
       };
     }
@@ -81,7 +92,7 @@ class GameStateManager {
       joinedAt: Date.now(),
       isOnline: true,
       stats: {
-        ...INITIAL_PLAYER_STATS,
+        ...INITIAL_PLAYER_STATS
       },
     };
 
@@ -102,6 +113,9 @@ class GameStateManager {
     const state = this.getState();
     const { [username]: _removed, ...remainingPlayers } = state.players;
 
+    // Also remove player from waiting queue
+    this.removeFromWaitingQueue(username);
+
     this.setState({
       ...state,
       players: remainingPlayers,
@@ -118,17 +132,15 @@ class GameStateManager {
     switch (gameResult) {
       case GAME_RESULTS.WIN:
         stats.wins++;
-        stats.winStreak++;
-        stats.bestStreak = Math.max(stats.bestStreak, stats.winStreak);
         break;
       case GAME_RESULTS.LOSS:
         stats.losses++;
-        stats.winStreak = 0;
         break;
       case GAME_RESULTS.DRAW:
         stats.draws++;
         break;
     }
+
     const updatedPlayer = { ...player, stats };
     const newState = {
       ...state,
@@ -161,12 +173,9 @@ class GameStateManager {
                   100
               )
             : 0,
-        winStreak: player.stats?.winStreak || 0,
-        bestStreak: player.stats?.bestStreak || 0,
-        score: this.calculateScore(player.stats || {}),
       }))
       .sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
+        if (b.wins !== a.wins) return b.wins - a.wins;
         if (b.winRate !== a.winRate) return b.winRate - a.winRate;
         return b.gamesPlayed - a.gamesPlayed;
       });
@@ -175,19 +184,6 @@ class GameStateManager {
       ...state,
       leaderboard,
     });
-  }
-
-  calculateScore(stats) {
-    const wins = stats?.wins || 0;
-    const draws = stats?.draws || 0;
-    const bestStreak = stats?.bestStreak || 0;
-
-    const baseScore = wins * SCORE_POINTS.WIN + draws * SCORE_POINTS.DRAW;
-    const streakBonus =
-      bestStreak >= SCORE_POINTS.STREAK_BONUS_THRESHOLD
-        ? bestStreak * SCORE_POINTS.STREAK_BONUS_MULTIPLIER
-        : 0;
-    return baseScore + streakBonus;
   }
 
   getOnlinePlayers() {
@@ -207,15 +203,25 @@ class GameStateManager {
     const challenged = state.players[challengedUsername];
 
     if (!challenger || !challenged) {
-      notification.error({
-        message: NOTIFICATION_MESSAGES.CHALLENGE_ERROR,
-        description: ERROR_MESSAGES.PLAYER_NOT_FOUND,
-      });
       throw new Error(ERROR_MESSAGES.PLAYER_NOT_FOUND);
     }
 
     if (!challenger.isOnline || !challenged.isOnline) {
       throw new Error(ERROR_MESSAGES.PLAYERS_MUST_BE_ONLINE);
+    }
+
+    // Check if either player is already in a game
+    const challengerActiveGame = this.getActiveGameSession(challengerUsername);
+    const challengedActiveGame = this.getActiveGameSession(challengedUsername);
+
+    if (challengerActiveGame) {
+      throw new Error("You are already in a game");
+    }
+
+    if (challengedActiveGame) {
+      // Add challenger to waiting queue for this specific opponent
+      this.addToWaitingQueue(challengerUsername, challengedUsername);
+      throw new Error(`${challengedUsername} is currently in a game. You've been added to the waiting list.`);
     }
 
     const existingChallenge = Object.values(state.challenges || {}).find(
@@ -226,10 +232,7 @@ class GameStateManager {
           challenge.challenged === challengerUsername)
     );
 
-    if (
-      existingChallenge &&
-      existingChallenge.status === CHALLENGE_STATUS.PENDING
-    ) {
+    if (existingChallenge && existingChallenge.status === CHALLENGE_STATUS.PENDING) {
       throw new Error(ERROR_MESSAGES.CHALLENGE_EXISTS);
     }
 
@@ -240,9 +243,9 @@ class GameStateManager {
       id: challengeId,
       challenger: challengerUsername,
       challenged: challengedUsername,
-      status: CHALLENGE_STATUS.PENDING,
+      status: CHALLENGE_STATUS.PENDING, // pending, accepted, rejected, expired
       createdAt: Date.now(),
-      expiresAt: Date.now() + TIME_CONSTANTS.CHALLENGE_EXPIRY,
+      expiresAt: Date.now() + TIME_CONSTANTS.CHALLENGE_EXPIRY, // 2 minutes
     };
 
     const newState = {
@@ -387,22 +390,24 @@ class GameStateManager {
   getActiveGameSession(username) {
     const state = this.getState();
     const sessions = Object.values(state.gameSessions || {});
-    return sessions.find(
+
+    const activeSession = sessions.find(
       (session) =>
-        session.players.includes(username) &&
-        session.status === GAME_SESSION_STATUS.ACTIVE
+        session.players.includes(username) && session.status === GAME_SESSION_STATUS.ACTIVE
     );
+
+    return activeSession;
   }
 
   cleanupExpiredChallenges() {
     const state = this.getState();
     const challenges = state.challenges || {};
     const now = Date.now();
+
     const activeChallenges = Object.fromEntries(
       Object.entries(challenges).filter(
         ([, challenge]) =>
-          challenge.status !== CHALLENGE_STATUS.PENDING ||
-          now < challenge.expiresAt
+          challenge.status !== CHALLENGE_STATUS.PENDING || now < challenge.expiresAt
       )
     );
 
@@ -410,6 +415,176 @@ class GameStateManager {
       ...state,
       challenges: activeChallenges,
     });
+  }
+
+  // Waiting Queue Management
+  addToWaitingQueue(waitingPlayer, targetPlayer) {
+    const state = this.getState();
+    const waitingQueue = state.waitingQueue || [];
+    
+    // Check if this waiting request already exists
+    const existingRequest = waitingQueue.find(
+      (request) => 
+        request.waitingPlayer === waitingPlayer && 
+        request.targetPlayer === targetPlayer
+    );
+    
+    if (existingRequest) {
+      return; // Already in queue for this player
+    }
+    
+    const queueEntry = {
+      id: `wait_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      waitingPlayer,
+      targetPlayer,
+      createdAt: Date.now(),
+    };
+    
+    const newState = {
+      ...state,
+      waitingQueue: [...waitingQueue, queueEntry],
+    };
+    
+    this.setState(newState);
+    console.log(`Added ${waitingPlayer} to waiting queue for ${targetPlayer}`);
+  }
+
+  removeFromWaitingQueue(waitingPlayer, targetPlayer = null) {
+    const state = this.getState();
+    const waitingQueue = state.waitingQueue || [];
+    
+    const filteredQueue = waitingQueue.filter((request) => {
+      if (targetPlayer) {
+        // Remove specific waiting request
+        return !(request.waitingPlayer === waitingPlayer && request.targetPlayer === targetPlayer);
+      } else {
+        // Remove all waiting requests for this player
+        return request.waitingPlayer !== waitingPlayer;
+      }
+    });
+    
+    const newState = {
+      ...state,
+      waitingQueue: filteredQueue,
+    };
+    
+    this.setState(newState);
+  }
+
+  getWaitingQueue() {
+    const state = this.getState();
+    return state.waitingQueue || [];
+  }
+
+  getPlayersWaitingFor(username) {
+    const waitingQueue = this.getWaitingQueue();
+    return waitingQueue.filter(request => request.targetPlayer === username);
+  }
+
+  processWaitingQueue(availablePlayer) {
+    const state = this.getState();
+    const waitingQueue = state.waitingQueue || [];
+    
+    const waitingPlayers = waitingQueue.filter(
+      (request) => request.targetPlayer === availablePlayer
+    );
+    
+    if (waitingPlayers.length === 0) {
+      return null;
+    }    
+    const nextWaiter = waitingPlayers[0];
+    
+    const waiterPlayer = state.players[nextWaiter.waitingPlayer];
+    if (!waiterPlayer || !waiterPlayer.isOnline || this.getActiveGameSession(nextWaiter.waitingPlayer)) {
+      this.removeFromWaitingQueue(nextWaiter.waitingPlayer, availablePlayer);
+      return this.processWaitingQueue(availablePlayer); 
+    }
+    
+    this.removeFromWaitingQueue(nextWaiter.waitingPlayer, availablePlayer);
+    
+    try {
+      const challenge = this.createChallenge(nextWaiter.waitingPlayer, availablePlayer);
+      console.log(`Automatic challenge created: ${nextWaiter.waitingPlayer} vs ${availablePlayer}`);
+      return {
+        challenger: nextWaiter.waitingPlayer,
+        challenged: availablePlayer,
+        challenge
+      };
+    } catch (error) {
+      console.error('Failed to create automatic challenge:', error);
+      return null;
+    }
+  }
+
+  cleanupCompletedGames() {
+    const state = this.getState();
+    const gameSessions = state.gameSessions || {};
+    const now = Date.now();
+    const ONE_HOUR = 60 * 60 * 1000;
+    
+    const activeGames = Object.fromEntries(
+      Object.entries(gameSessions).filter(([, session]) => {
+        if (session.status === GAME_SESSION_STATUS.ACTIVE) {
+          return true; 
+        }
+        
+        if (session.status === GAME_SESSION_STATUS.COMPLETED && session.completedAt) {
+          // Keep completed games for 1 hour for reference
+          return (now - session.completedAt) < ONE_HOUR;
+        }
+        
+        return false; 
+      })
+    );
+    
+    if (Object.keys(activeGames).length !== Object.keys(gameSessions).length) {
+      const newState = {
+        ...state,
+        gameSessions: activeGames,
+      };
+      
+      this.setState(newState);
+      console.log(`Cleaned up ${Object.keys(gameSessions).length - Object.keys(activeGames).length} old game sessions`);
+    }
+  }
+
+  // Force immediate status update across all tabs
+  forceStatusUpdate() {
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: this.storageKey,
+      newValue: JSON.stringify(this.getState()),
+      oldValue: null
+    }));
+  }
+
+  getPlayerStatus(username) {
+    this.cleanupCompletedGames();    
+    const activeGame = this.getActiveGameSession(username);
+    const waitingFor = this.getWaitingQueue().filter(q => q.waitingPlayer === username);
+    const waitersForPlayer = this.getWaitingQueue().filter(q => q.targetPlayer === username);
+    
+    const status = {
+      isInGame: !!activeGame,
+      activeGameId: activeGame?.id || null,
+      waitingFor: waitingFor.map(w => w.targetPlayer),
+      hasWaiters: waitersForPlayer.length > 0,
+      waitersCount: waitersForPlayer.length
+    };
+
+    return status;
+  }
+
+  isPlayerInActiveGame(username) {
+    const state = this.getState();
+    const sessions = Object.values(state.gameSessions || {});
+    
+    const inGame = sessions.some(
+      (session) =>
+        session.players.includes(username) && 
+        session.status === GAME_SESSION_STATUS.ACTIVE
+    );
+
+    return inGame;
   }
 
   makePlayerChoice(sessionId, username, choice) {
@@ -439,13 +614,16 @@ class GameStateManager {
     };
 
     const playerChoices = Object.keys(updatedSession.choices);
+    let winner = null;
+    let gameCompleted = false;
+
     if (playerChoices.length === 2) {
       const [player1, player2] = session.players;
       const choice1 = updatedSession.choices[player1];
       const choice2 = updatedSession.choices[player2];
 
       const gameResult = this.determineWinner(choice1, choice2);
-      let winner = null;
+      gameCompleted = true;
 
       if (gameResult === GAME_RESULTS.WIN) {
         winner = player1;
@@ -464,16 +642,6 @@ class GameStateManager {
       };
       updatedSession.winner = winner;
       updatedSession.completedAt = Date.now();
-      if (winner === player1) {
-        this.updatePlayerStats(player1, GAME_RESULTS.WIN);
-        this.updatePlayerStats(player2, GAME_RESULTS.LOSS);
-      } else if (winner === player2) {
-        this.updatePlayerStats(player1, GAME_RESULTS.LOSS);
-        this.updatePlayerStats(player2, GAME_RESULTS.WIN);
-      } else {
-        this.updatePlayerStats(player1, GAME_RESULTS.DRAW);
-        this.updatePlayerStats(player2, GAME_RESULTS.DRAW);
-      }
     }
 
     const newState = {
@@ -485,70 +653,62 @@ class GameStateManager {
     };
 
     this.setState(newState);
+
+          if (gameCompleted) {
+        const [player1, player2] = session.players;
+        console.log(
+          `Game completed! Winner: ${
+            winner || "draw"
+          }, Player1: ${player1}, Player2: ${player2}`
+        );
+
+        if (winner === player1) {
+          this.updatePlayerStats(player1, GAME_RESULTS.WIN);
+          this.updatePlayerStats(player2, GAME_RESULTS.LOSS);
+        } else if (winner === player2) {
+          this.updatePlayerStats(player1, GAME_RESULTS.LOSS);
+          this.updatePlayerStats(player2, GAME_RESULTS.WIN);
+        } else {
+          this.updatePlayerStats(player1, GAME_RESULTS.DRAW);
+          this.updatePlayerStats(player2, GAME_RESULTS.DRAW);
+        }
+
+        this.cleanupCompletedGames();
+
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: this.storageKey,
+          newValue: JSON.stringify(this.getState()),
+          oldValue: null
+        }));
+
+        setTimeout(() => {
+          const match1 = this.processWaitingQueue(player1);
+          const match2 = this.processWaitingQueue(player2);
+          
+          if (match1) {
+            window.dispatchEvent(new StorageEvent('storage', {
+              key: this.storageKey,
+              newValue: JSON.stringify(this.getState()),
+              oldValue: null
+            }));
+          }
+          if (match2) {
+            window.dispatchEvent(new StorageEvent('storage', {
+              key: this.storageKey,
+              newValue: JSON.stringify(this.getState()),
+              oldValue: null
+            }));
+          }
+        }, 500); 
+      }
+
     return updatedSession;
   }
 
   determineWinner(choice1, choice2) {
     if (choice1 === choice2) return GAME_RESULTS.DRAW;
-
-    return WIN_CONDITIONS[choice1] === choice2
-      ? GAME_RESULTS.WIN
-      : GAME_RESULTS.LOSE;
-  }
-
-  cleanupCompletedGames() {
-    const state = this.getState();
-    const sessions = state.gameSessions || {};
-    const now = Date.now();
-    const oneHourAgo = now - 60 * 60 * 1000; // 1 hour
-
-    const activeSessions = Object.fromEntries(
-      Object.entries(sessions).filter(
-        ([, session]) =>
-          session.status === GAME_SESSION_STATUS.ACTIVE ||
-          (session.status === GAME_SESSION_STATUS.COMPLETED &&
-            session.completedAt &&
-            session.completedAt > oneHourAgo)
-      )
-    );
-
-    this.setState({
-      ...state,
-      gameSessions: activeSessions,
-    });
-  }
-
-  isPlayerInActiveGame(username) {
-    const activeSession = this.getActiveGameSession(username);
-    return !!activeSession;
-  }
-
-  getWaitingQueue() {
-    return [];
-  }
-
-  isValidChoice(choice) {
-    return Object.values(GAME_CHOICES).includes(choice);
-  }
-
-  getGameStats() {
-    const state = this.getState();
-    const players = Object.values(state.players);
-
-    return {
-      totalPlayers: players.length,
-      onlinePlayers: players.filter((p) => p.isOnline).length,
-      totalGames: players.reduce(
-        (sum, p) => sum + (p.stats?.gamesPlayed || 0),
-        0
-      ),
-      activeChallenges: Object.values(state.challenges || {}).filter(
-        (c) => c.status === CHALLENGE_STATUS.PENDING
-      ).length,
-      activeGames: Object.values(state.gameSessions || {}).filter(
-        (s) => s.status === GAME_SESSION_STATUS.ACTIVE
-      ).length,
-    };
+    
+    return WIN_CONDITIONS[choice1] === choice2 ? GAME_RESULTS.WIN : GAME_RESULTS.LOSE;
   }
 }
 
