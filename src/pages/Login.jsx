@@ -33,7 +33,8 @@ const Login = () => {
       <Card className="login-card">
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div style={{ textAlign: 'center' }}>
-            <Logo/>
+                       <Logo width = '140px' height = '140px'/>
+
             <Title level={2} className="login-title">
              Join the Game
             </Title>
