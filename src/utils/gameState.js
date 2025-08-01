@@ -112,10 +112,7 @@ class GameStateManager {
   removePlayer(username) {
     const state = this.getState();
     const { [username]: _removed, ...remainingPlayers } = state.players;
-
-    // Also remove player from waiting queue
     this.removeFromWaitingQueue(username);
-
     this.setState({
       ...state,
       players: remainingPlayers,

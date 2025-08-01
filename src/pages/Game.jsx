@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Button, Typography, Space, Row, Col, message, Modal } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import { Card, Button, Space, message } from 'antd';
 import { useAuth } from '../hooks/useAuth';
 import { gameState } from '../utils/gameState';
 import { crossTabSync } from '../utils/crossTabSync';
-import { PageLoading, Error, OverlayLoading } from '../components/ui';
-
-const { Title, Text } = Typography;
+import { PageLoading, Error } from '../components/ui';
+import {
+  GameHeader,
+  PlayersDisplay,
+  ChoiceSelector,
+  WaitingDisplay,
+  GameResults
+} from './GameArena';
+import {choices,ERROR_MESSAGES,NOTIFICATION_MESSAGES,STORAGE_KEYS} from "../constants/common.constants"
 
 const Game = () => {
   const { sessionId } = useParams();
@@ -20,11 +25,6 @@ const Game = () => {
   const [loading, setLoading] = useState(true);
   const [waitingForOpponent, setWaitingForOpponent] = useState(false);
 
-  const choices = [
-    { id: 'rock', emoji: '🪨', name: 'Rock' },
-    { id: 'paper', emoji: '📄', name: 'Paper' },
-    { id: 'scissors', emoji: '✂️', name: 'Scissors' }
-  ];
 
   const loadGameSession = useCallback(() => {
     try {
@@ -34,7 +34,7 @@ const Game = () => {
                      );
       
       if (!session || session.id !== sessionId) {
-        message.error('Game session not found or you are not part of this game');
+        message.error(ERROR_MESSAGES.GAME_SESSION_NOT_FOUND);
         navigate('/lobby');
         return;
       }
@@ -62,7 +62,7 @@ const Game = () => {
         setWaitingForOpponent(false);
       }
     } catch (error) {
-      message.error(`Failed to load game session , ${error?.message}` );
+      message.error(`${ERROR_MESSAGES.FAILED_TO_LOAD} , ${error?.message}` );
       navigate('/lobby');
     }
   }, [user, sessionId, navigate, playerChoice, opponentChoice]);
@@ -90,31 +90,19 @@ const Game = () => {
 
     try {
       gameState.makePlayerChoice(sessionId, user.username, choice);
-      message.success('Choice made! Waiting for opponent...');
+      message.success(NOTIFICATION_MESSAGES.GAME_CHOICE_DONE);
     } catch (err) {
-      console.error('Failed to make choice:', err);
-      message.error('Failed to make choice');
+      console.log(err);
+      message.error(ERROR_MESSAGES.FAILED_TO_CHOICE);
       setPlayerChoice(null);
       setWaitingForOpponent(false);
-    }
-  };
-
-  const getResultText = () => {
-    if (!gameResult) return null;
-    
-    if (gameResult === user.username) {
-      return { text: 'You Win!', color: 'var(--success-color)' };
-    } else if (gameResult === 'draw') {
-      return { text: 'It\'s a Draw!', color: 'var(--warning-color)' };
-    } else {
-      return { text: 'You Lose!', color: 'var(--error-color)' };
     }
   };
 
   const returnToLobby = () => {
     gameState.cleanupCompletedGames();    
     window.dispatchEvent(new StorageEvent('storage', {
-      key: 'rps_game_state',
+      key: STORAGE_KEYS.GAME_STATE,
       newValue: JSON.stringify(gameState.getState()),
       oldValue: null
     }));
@@ -136,7 +124,7 @@ const Game = () => {
           type="result"
           severity="warning"
           title="Game Session Not Found"
-          message="The game session you're looking for doesn't exist or has expired."
+          message={ERROR_MESSAGES.GAME_EXPIRED}
           actions={[
             <Button key="lobby" type="primary" onClick={returnToLobby}>
               Return to Lobby
@@ -152,146 +140,47 @@ const Game = () => {
   return (
     <div className="game-container">
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Button 
-              icon={<ArrowLeftOutlined />} 
-              onClick={returnToLobby}
-              disabled={gameSession.status === 'active' && !gameResult}
-            >
-              Back to Lobby
-            </Button>
-            <Title level={3} style={{ margin: 0, color: 'var(--text-primary)' }}>
-              Rock Paper Scissors
-            </Title>
-            <div />
-          </div>
-        </Card>
+        <GameHeader 
+          onBack={returnToLobby}
+          canGoBack={gameSession.status !== 'active' || gameResult}
+        />
 
-        <Card>
-          <Row gutter={24} align="middle">
-            <Col span={8} style={{ textAlign: 'center' }}>
-              <div className="player-card">
-                <Text strong style={{ fontSize: '18px', color: 'var(--text-primary)' }}>
-                  {user.username} (You)
-                </Text>
-              </div>
-            </Col>
-            <Col span={8} style={{ textAlign: 'center' }}>
-              <div className="vs-divider">VS</div>
-            </Col>
-            <Col span={8} style={{ textAlign: 'center' }}>
-              <div className="player-card">
-                <Text strong style={{ fontSize: '18px', color: 'var(--text-primary)' }}>
-                  {opponent}
-                </Text>
-              </div>
-            </Col>
-          </Row>
-        </Card>
+        <PlayersDisplay 
+          currentUser={user.username}
+          opponent={opponent}
+        />
 
         <Card title={gameResult ? "Game Results" : "Make Your Choice"}>
           {!gameResult ? (
             !playerChoice ? (
-              <div className="choices-grid">
-                {choices.map(choice => (
-                  <OverlayLoading spinning={waitingForOpponent} message="Processing choice...">
-                    <Button
-                      key={choice.id}
-                      className={`game-choice-btn ${choice.id}`}
-                      onClick={() => makeChoice(choice.id)}
-                      disabled={waitingForOpponent}
-                      style={{ 
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}
-                    >
-                      <span style={{ fontSize: '32px' }}>{choice.emoji}</span>
-                      <span style={{ fontSize: '12px' }}>{choice.name}</span>
-                    </Button>
-                  </OverlayLoading>
-                ))}
-              </div>
+              <ChoiceSelector
+                choices={choices}
+                onChoiceSelect={makeChoice}
+                disabled={waitingForOpponent}
+                loading={waitingForOpponent}
+              />
             ) : (
-              <div style={{ textAlign: 'center' }}>
-                <Text style={{ fontSize: '18px', display: 'block', marginBottom: '16px' }}>
-                  {waitingForOpponent ? 'Waiting for opponent...' : 'Game completed!'}
-                </Text>
-                
-                {opponentChoice && (
-                  <Row gutter={24} style={{ marginBottom: '24px' }}>
-                    <Col span={8} style={{ textAlign: 'center' }}>
-                      <div>
-                        <Text>You chose:</Text>
-                        <div style={{ fontSize: '48px', margin: '8px 0' }}>
-                          {choices.find(c => c.id === playerChoice)?.emoji}
-                        </div>
-                        <Text>{choices.find(c => c.id === playerChoice)?.name}</Text>
-                      </div>
-                    </Col>
-                    <Col span={8} style={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <div className="vs-divider">VS</div>
-                    </Col>
-                    <Col span={8} style={{ textAlign: 'center' }}>
-                      <div>
-                        <Text>{opponent} chose:</Text>
-                        <div style={{ fontSize: '48px', margin: '8px 0' }}>
-                          {choices.find(c => c.id === opponentChoice)?.emoji}
-                        </div>
-                        <Text>{choices.find(c => c.id === opponentChoice)?.name}</Text>
-                      </div>
-                    </Col>
-                  </Row>
-                )}
-              </div>
+              <WaitingDisplay
+                playerChoice={playerChoice}
+                opponentChoice={opponentChoice}
+                choices={choices}
+                currentUser={user.username}
+                opponent={opponent}
+                waitingForOpponent={waitingForOpponent}
+              />
             )
           ) : (
-            <div style={{ textAlign: 'center' }}>
-              <Row gutter={24} style={{ marginBottom: '32px' }}>
-                <Col span={8} style={{ textAlign: 'center' }}>
-                  <div>
-                    <Text>You chose:</Text>
-                    <div style={{ fontSize: '48px', margin: '8px 0' }}>
-                      {choices.find(c => c.id === playerChoice)?.emoji}
-                    </div>
-                    <Text>{choices.find(c => c.id === playerChoice)?.name}</Text>
-                  </div>
-                </Col>
-                <Col span={8} style={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <div className="vs-divider">VS</div>
-                </Col>
-                <Col span={8} style={{ textAlign: 'center' }}>
-                  <div>
-                    <Text>{opponent} chose:</Text>
-                    <div style={{ fontSize: '48px', margin: '8px 0' }}>
-                      {choices.find(c => c.id === opponentChoice)?.emoji}
-                    </div>
-                    <Text>{choices.find(c => c.id === opponentChoice)?.name}</Text>
-                  </div>
-                </Col>
-              </Row>
-
-              <div style={{ marginBottom: '24px' }}>
-                <Text style={{ 
-                  fontSize: '32px', 
-                  fontWeight: 'bold',
-                  color: getResultText()?.color,
-                  display: 'block'
-                }}>
-                  {getResultText()?.text}
-                </Text>
-              </div>
-
-              <Button type="primary" size="large" onClick={returnToLobby}>
-                Return to Lobby
-              </Button>
-            </div>
+            <GameResults
+              playerChoice={playerChoice}
+              opponentChoice={opponentChoice}
+              choices={choices}
+              gameResult={gameResult}
+              currentUser={user.username}
+              opponent={opponent}
+              onReturnToLobby={returnToLobby}
+            />
           )}
         </Card>
-
-
       </Space>
     </div>
   );

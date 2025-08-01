@@ -128,33 +128,7 @@ export const useChallengeNotifications = (user, gameState, crossTabSync) => {
   const shownNotifications = useRef(new Set()).current;
   const lastState = useRef(null);
 
-  const requestPermission = useCallback(async () => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      try {
-        const permission = await Notification.requestPermission();
-        return permission === 'granted';
-      } catch (error) {
-        console.warn('Notification permission request failed:', error);
-        return false;
-      }
-    }
-    return Notification.permission === 'granted';
-  }, []);
 
-  const showPushNotification = useCallback((title, body, icon) => {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      try {
-        new Notification(title, {
-          body,
-          icon: icon || '/vite.svg',
-          tag: 'rps-challenge',
-          requireInteraction: true
-        });
-      } catch (error) {
-        console.warn('Failed to show push notification:', error);
-      }
-    }
-  }, []);
 
   const showChallengeNotification = useCallback((challenge) => {
     if (!user) return;
@@ -268,9 +242,7 @@ export const useChallengeNotifications = (user, gameState, crossTabSync) => {
   }, [user, loadChallenges, gameState, crossTabSync]);
 
   return {
-    pendingChallenges,
-    requestPermission,
-    showPushNotification
+    pendingChallenges
   };
 };
 

@@ -35,7 +35,7 @@ class CrossTabSyncManager {
         }
       }
     } catch (error) {
-      console.error('Error handling tab closure:', error);
+      console.error('Error handling tab closure:', error); 
     }
   }
 

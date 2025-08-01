@@ -13,3 +13,5 @@ export {
 } from './Error';
 
 export { default as ChallengeNotification } from './ChallengeNotification';
+
+export {default as Rules} from './Rules'
