@@ -4,7 +4,7 @@ import { Card, Button, Space, message } from 'antd';
 import { useAuth } from '../hooks/useAuth';
 import { gameState } from '../utils/gameState';
 import { crossTabSync } from '../utils/crossTabSync';
-import { PageLoading, Error } from '../components/ui';
+import { PageLoading, Error,Rules } from '../components/ui';
 import {
   GameHeader,
   PlayersDisplay,
@@ -12,7 +12,7 @@ import {
   WaitingDisplay,
   GameResults
 } from './GameArena';
-import {choices,ERROR_MESSAGES,NOTIFICATION_MESSAGES,STORAGE_KEYS} from "../constants/common.constants"
+import {choices,GAME_SESSION_STATUS,ERROR_MESSAGES,NOTIFICATION_MESSAGES,STORAGE_KEYS} from "../constants/common.constants"
 
 const Game = () => {
   const { sessionId } = useParams();
@@ -24,7 +24,6 @@ const Game = () => {
   const [gameResult, setGameResult] = useState(null);
   const [loading, setLoading] = useState(true);
   const [waitingForOpponent, setWaitingForOpponent] = useState(false);
-
 
   const loadGameSession = useCallback(() => {
     try {
@@ -40,7 +39,7 @@ const Game = () => {
       }
       setGameSession(session);
       setLoading(false);
-      if (session.status === 'active') {
+      if (session.status === GAME_SESSION_STATUS.ACTIVE) {
         const opponent = session.players.find(p => p !== user.username);
         const userChoice = session.choices[user.username];
         const opponentChoiceFromSession = session.choices[opponent];
@@ -54,7 +53,7 @@ const Game = () => {
           setWaitingForOpponent(false);
         }
       
-      } else if (session.status === 'completed') {
+      } else if (session.status === GAME_SESSION_STATUS.COMPLETED) {
         const opponent = session.players.find(p => p !== user.username);
         setPlayerChoice(session.choices[user.username]);
         setOpponentChoice(session.choices[opponent]);
@@ -72,7 +71,6 @@ const Game = () => {
       navigate('/lobby');
       return;
     }
-
     loadGameSession();
 
     const unsubscribe = crossTabSync.subscribe(() => {
@@ -84,7 +82,6 @@ const Game = () => {
 
   const makeChoice = async (choice) => {
     if (playerChoice || waitingForOpponent) return;
-
     setPlayerChoice(choice);
     setWaitingForOpponent(true);
 
@@ -180,6 +177,11 @@ const Game = () => {
               onReturnToLobby={returnToLobby}
             />
           )}
+        </Card>
+        <Card>
+          <div style={{padding:"24px"}}>
+          <Rules/>
+           </div>
         </Card>
       </Space>
     </div>

@@ -4,6 +4,7 @@ import {
   TrophyOutlined,
   ClockCircleOutlined,
   UsergroupAddOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
@@ -14,10 +15,11 @@ import {
   PageLoading,
   CardLoading,
   InlineError,
+  CardEmptyState,
   OverlayLoading,
 } from "../../components/ui";
 import { TIME_CONSTANTS, ERROR_MESSAGES, NOTIFICATION_MESSAGES } from "../../constants/common.constants.js";
-import OnlinePlayer from "./OnlinePlayer";
+import OnlinePlayers from "./OnlinePlayer";
 import LeaderBoard from "./LeaderBoard";
 import PendingChallenges from "./PendingChallenges";
 import WaitingQueue from "./WaitingQueue";
@@ -209,11 +211,7 @@ const GameLobby = () => {
           />
         )}
         <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "2fr 1fr",
-            gap: "24px",
-          }}
+          className="lobby-container"
         >
           <Card
             title={
@@ -244,61 +242,29 @@ const GameLobby = () => {
                     }}
                     size="small"
                   >
-                    {onlinePlayers.filter(
-                      (player) => player.username !== user.username
-                    ).length > 0 ? (
-                      onlinePlayers
-                        .filter((player) => player.username !== user.username)
-                        .map((player) => {
-                          const isPlayerInGame = gameState.isPlayerInActiveGame(
-                            player.username
-                          );
-                          return (
-                            <OnlinePlayer
-                              key={player.username}
-                              player={player}
-                              currentUser={user}
-                              isInGame={isPlayerInGame}
-                              onClick={handleChallengePlayer}
-                            />
-                          );
-                        })
+                  {
+                    onlinePlayers.length > 1 ? (
+                      <OnlinePlayers
+                        onlinePlayers={onlinePlayers}
+                        onClick={handleChallengePlayer}
+                        currentUser={user}
+                      />
                     ) : (
-                      <div style={{ textAlign: "center", padding: "20px" }}>
-                        <Text type="secondary">No other players online</Text>
-                      </div>
-                    )}
+                      <CardEmptyState 
+                        title="No players online"
+                        discription="Please wait for some time some warrior may come"
+                        icon={<UserOutlined />}
+                      />
+                    )
+                  }
+                  
                   </Space>
                 </div>
               </Space>
             </OverlayLoading>
           </Card>
           <Space direction="vertical">
-            {/* LeaderBoard */}
-            <Card
-              title={
-                <Space>
-                  <TrophyOutlined />
-                  <span> Leaderboard</span>
-                </Space>
-              }
-            >
-              <div
-                style={{
-                  maxHeight: "260px",
-                  overflowY: "auto",
-                  padding: "16px",
-                }}
-              >
-                {leaderboard.length > 0 ? (
-                  <LeaderBoard leaderboard={leaderboard} currentUser={user} />
-                ) : (
-                  <CardLoading skeletonProps={{ rows: 3, avatar: true }} />
-                )}
-              </div>
-            </Card>
-
-            {/* Challenges & queue */}
+                {/* Challenges & queue */}
             <Card
               title={
                 <Space>
@@ -307,7 +273,7 @@ const GameLobby = () => {
                 </Space>
               }
             >
-              <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
+              <div style={{ height: "300px", overflowY: "auto" }}>
                 <PendingChallenges
                   pendingChallenges={pendingChallenges}
                   onAcceptChallenge={handleAcceptChallenge}
@@ -320,12 +286,30 @@ const GameLobby = () => {
                       q.waitingPlayer === user?.username ||
                       q.targetPlayer === user?.username
                   ).length === 0 && (
-                    <div style={{ textAlign: "center", padding: "20px" }}>
-                      <Text type="secondary">
-                        No pending challenges or waiting queue
-                      </Text>
-                    </div>
+                    <CardEmptyState 
+                      title="No pending challenges"
+                      discription="Challenge other players to start a game!"
+                      icon={<ClockCircleOutlined />}
+                    />
                   )}
+              </div>
+            </Card>
+            <Card
+              title={
+                <Space>
+                  <TrophyOutlined />
+                  <span> Leaderboard</span>
+                </Space>
+              }
+            >
+              <div
+                style={{
+                  height: "300px",
+                  overflowY: "auto",
+                  padding: "16px",
+                }}
+              >
+                 <LeaderBoard leaderboard={leaderboard} currentUser={user} />
               </div>
             </Card>
           </Space>

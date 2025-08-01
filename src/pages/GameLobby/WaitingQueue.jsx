@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, Typography, Space } from "antd";
 import { NOTIFICATION_MESSAGES } from "../../constants/common.constants";
+import {TrophyOutlined} from '@ant-design/icons'
 
 const { Text } = Typography;
 
@@ -12,6 +13,16 @@ const WaitingQueue = ({ waitingQueue, currentUser }) => {
   
   if (!hasAnyQueue) {
     return null;
+  }
+
+  if (!hasAnyQueue) {
+    return (
+      <div style={{ textAlign: "center", padding: "20px" }}>
+        <Text type="secondary">
+          No pending challenges or waiting queue
+        </Text>
+      </div>
+    );
   }
 
   return (

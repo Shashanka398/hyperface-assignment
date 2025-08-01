@@ -40,7 +40,7 @@ function AppContent() {
       },
       Button: {
         borderRadius: 8,
-        fontWeight: 500,
+        fontWeight: 400,
       },
       Card: {
         borderRadius: 12,

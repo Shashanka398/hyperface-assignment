@@ -1,11 +1,12 @@
 import React from 'react';
 import { Card, Badge, Button, Typography, Space, Tag } from 'antd';
-import { UserOutlined, PlayCircleFilled, PauseCircleFilled } from '@ant-design/icons';
-import {formatJoinTime} from '../../utils/common-util'
+import { UserOutlined, PlayCircleFilled, PauseCircleFilled,TrophyOutlined } from '@ant-design/icons';
+import { formatJoinTime } from '../../utils/common-util';
+import { gameState } from '../../utils/gameState';
 
 const { Text } = Typography;
 
-const OnlinePlayer = ({ player, onClick, currentUser, isInGame = false }) => {
+const PlayerCard = ({ player, onClick, currentUser, isInGame = false }) => {
   const isCurrentUser = currentUser?.username === player.username;
   
   const getStatusColor = () => {
@@ -13,12 +14,10 @@ const OnlinePlayer = ({ player, onClick, currentUser, isInGame = false }) => {
     return 'success';
   };
 
-
-
-  const handleChallengeClick=(e)=>{
-       e.stopPropagation();
-       onClick?.(player);
-  }
+  const handleChallengeClick = (e) => {
+    e.stopPropagation();
+    onClick?.(player);
+  };
 
   return (
     <Card 
@@ -75,4 +74,31 @@ const OnlinePlayer = ({ player, onClick, currentUser, isInGame = false }) => {
   );
 };
 
-export default OnlinePlayer;
+const OnlinePlayers = ({ onlinePlayers, onClick, currentUser }) => {
+  const otherPlayers = onlinePlayers
+    .filter((player) => player.username !== currentUser.username)
+    .map((player) => ({
+      ...player,
+      isPlayerInGame: gameState.isPlayerInActiveGame(player.username)
+    }));
+
+    
+  return (
+    <Space direction="vertical" style={{ width: '100%' }} size="small">
+      {otherPlayers.map((player) => (
+        <PlayerCard
+          key={player.username}
+          player={player}
+          onClick={onClick}
+          currentUser={currentUser}
+          isInGame={player.isPlayerInGame}
+        />
+      ))}
+    </Space>
+  );
+};
+
+
+
+
+export default OnlinePlayers;

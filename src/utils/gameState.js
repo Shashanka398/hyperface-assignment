@@ -171,7 +171,7 @@ class GameStateManager {
               )
             : 0,
       }))
-      .sort((a, b) => {
+      .filter((player)=>player.wins>0).sort((a, b) => {
         if (b.wins !== a.wins) return b.wins - a.wins;
         if (b.winRate !== a.winRate) return b.winRate - a.winRate;
         return b.gamesPlayed - a.gamesPlayed;

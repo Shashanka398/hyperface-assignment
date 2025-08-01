@@ -138,9 +138,15 @@
   color: var(--warning-color);
 }
 
+.lobby-container{
+  display: grid;
+
+  gap: 24px
+}
 
 
-/* Responsive */
+
+
 @media (max-width: 768px) {
   .players-section {
     grid-template-columns: 1fr;
@@ -164,3 +170,12 @@
     flex-wrap: wrap;
   }
 } 
+
+@media(min-width:400px){
+  .lobby-container{
+  grid-template-columns: 2fr 1fr;
+  }
+}
+
+
+

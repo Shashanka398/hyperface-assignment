@@ -67,7 +67,7 @@ export const NOTIFICATION_MESSAGES = {
   CHALLENGE_SENT: 'Challenge sent successfully',
   CHALLENGE_ACCEPTED: 'Challenge accepted',
   CHALLENGE_REJECTED: 'Challenge rejected',
-  GAME_STARTED: 'Game started',
+  GAME_STARTED: 'Entering game arena....',
   GAME_COMPLETED: 'Game completed',
   GAME_CHOICE_DONE:'Choice made! Waiting for opponent...',
   YOU_WIN: 'You Win!',
@@ -76,7 +76,7 @@ export const NOTIFICATION_MESSAGES = {
   WAITING_FOR_PLAYER: 'Waiting for {player} to finish their game',
   PLAYER_WAITING_FOR_YOU: '{player} is waiting for you',
   YOURE_WAITING_FOR: 'You\'re Waiting For',
-  PLAYERS_WAITING_FOR_YOU: 'Players Waiting for You'
+  PLAYERS_WAITING_FOR_YOU: 'Players Waiting for You',
 };
 
 export const INITIAL_PLAYER_STATS = {

@@ -91,7 +91,7 @@ const Loading = ({
 
   if (type === 'card') {
     return (
-      <Card className={className} style={style}>
+      <Card className={className}  bordered={false} style={style}>
         <Skeleton 
           loading={spinning}
           active

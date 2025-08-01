@@ -16,7 +16,6 @@ const GameResults = ({
 }) => {
   const getResultText = () => {
     if (!gameResult) return null;
-    
     if (gameResult === currentUser) {
       return { text: NOTIFICATION_MESSAGES.YOU_WIN, color: 'var(--success-color)' };
     } else if (gameResult === GAME_RESULTS.DRAW) {
@@ -62,6 +61,7 @@ const GameResults = ({
       <Button type="primary" size="large" onClick={onReturnToLobby}>
         Return to Lobby
       </Button>
+
     </div>
   );
 };
