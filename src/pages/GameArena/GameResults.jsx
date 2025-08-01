@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Row, Col, Typography } from 'antd';
+import { Button, Row, Col, Typography, Space } from 'antd';
 import GameChoiceDisplay from './GameChoiceDisplay';
 import { GAME_RESULTS, NOTIFICATION_MESSAGES } from '../../constants/common.constants';
 
@@ -12,7 +12,12 @@ const GameResults = ({
   gameResult, 
   currentUser, 
   opponent, 
-  onReturnToLobby 
+  onReturnToLobby,
+  replayRequestSent = false,
+  replayRequestReceived = false,
+  onRequestReplay,
+  onAcceptReplay,
+  onDeclineReplay
 }) => {
   const getResultText = () => {
     if (!gameResult) return null;
@@ -58,9 +63,41 @@ const GameResults = ({
         </Text>
       </div>
 
-      <Button type="primary" size="large" onClick={onReturnToLobby}>
-        Return to Lobby
-      </Button>
+      {replayRequestReceived ? (
+        <div style={{ marginBottom: '16px' }}>
+          <Text style={{ fontSize: '18px', display: 'block', marginBottom: '16px' }}>
+            {opponent} wants to play again!
+          </Text>
+          <Space size="large">
+            <Button type="primary" size="large" onClick={onAcceptReplay}>
+              Accept Replay
+            </Button>
+            <Button size="large" onClick={onDeclineReplay}>
+              Decline
+            </Button>
+          </Space>
+        </div>
+      ) : replayRequestSent ? (
+        <div style={{ marginBottom: '16px' }}>
+          <Text style={{ fontSize: '18px', display: 'block', marginBottom: '16px' }}>
+            Waiting for {opponent} to respond...
+          </Text>
+          <Button size="large" loading>
+            Replay Request Sent
+          </Button>
+        </div>
+      ) : (
+        <div style={{ marginBottom: '16px' }}>
+          <Space size="large">
+            <Button type="primary" size="large" onClick={onRequestReplay}>
+              Play Again
+            </Button>
+            <Button size="large" onClick={onReturnToLobby}>
+              Return to Lobby
+            </Button>
+          </Space>
+        </div>
+      )}
 
     </div>
   );
