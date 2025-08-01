@@ -41,13 +41,7 @@ export const TIME_CONSTANTS = {
   CLEANUP_INTERVAL: 10000
 };
 
-export const SCORE_POINTS = {
-  WIN: 3,
-  DRAW: 1,
-  LOSS: 0,
-  STREAK_BONUS_THRESHOLD: 3,
-  STREAK_BONUS_MULTIPLIER: 2
-};
+
 
 export const ERROR_MESSAGES = {
   USERNAME_TAKEN: 'Username already taken',
