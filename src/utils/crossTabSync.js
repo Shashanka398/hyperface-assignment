@@ -1,4 +1,5 @@
 import { gameState } from './gameState.js';
+import {STORAGE_KEYS} from '../constants/common.constants.js'
 
 class CrossTabSyncManager {
   constructor() {
@@ -9,7 +10,7 @@ class CrossTabSyncManager {
 
   init() {
     window.addEventListener('storage', (e) => {
-      if (e.key === 'rps_game_state') {
+      if (e.key === STORAGE_KEYS.GAME_STATE) {
         this.notifyListeners(e.newValue ? JSON.parse(e.newValue) : null);
       }
     });
@@ -30,6 +31,7 @@ class CrossTabSyncManager {
         for (const [username, player] of Object.entries(currentState.players)) {
           if (player.tabId === this.currentTabId) {
             gameState.removePlayer(username);
+            sessionStorage.clear();
             break;
           }
         }
