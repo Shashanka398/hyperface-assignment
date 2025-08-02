@@ -169,7 +169,7 @@ const GameLobby = () => {
         const currentState = gameState.getState();
         window.dispatchEvent(
           new StorageEvent("storage", {
-            key: "rps_game_state",
+            key: GAME_,
             newValue: JSON.stringify(currentState),
           })
         );

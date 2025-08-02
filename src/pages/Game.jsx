@@ -13,7 +13,7 @@ import {
   GameResults,
 } from "./GameArena";
 import {
-  choices,
+  CHOICES,
   GAME_SESSION_STATUS,
   ERROR_MESSAGES,
   NOTIFICATION_MESSAGES,
@@ -303,8 +303,8 @@ const Game = () => {
           title="Game Session Not Found"
           message={ERROR_MESSAGES.GAME_EXPIRED}
           actions={[
-            <Button key="lobby" type="primary" onClick={returnToLobby}>
-              Return to Lobby
+            <Button key="lobby" type="primary"  icon={<ArrowLeftOutlined />}  onClick={returnToLobby}>
+              Lobby
             </Button>,
           ]}
         />
@@ -328,7 +328,7 @@ const Game = () => {
           {!gameResult ? (
             !playerChoice ? (
               <ChoiceSelector
-                choices={choices}
+                choices={CHOICES}
                 onChoiceSelect={makeChoice}
                 disabled={waitingForOpponent}
                 loading={waitingForOpponent}
@@ -337,7 +337,7 @@ const Game = () => {
               <WaitingDisplay
                 playerChoice={playerChoice}
                 opponentChoice={opponentChoice}
-                choices={choices}
+                choices={CHOICES}
                 currentUser={user.username}
                 opponent={opponent}
                 waitingForOpponent={waitingForOpponent}
@@ -347,7 +347,7 @@ const Game = () => {
             <GameResults
               playerChoice={playerChoice}
               opponentChoice={opponentChoice}
-              choices={choices}
+              choices={CHOICES}
               gameResult={gameResult}
               currentUser={user.username}
               opponent={opponent}

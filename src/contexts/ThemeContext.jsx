@@ -1,16 +1,16 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import {THEME_KEY} from '../constants/common.constants'
+import {STORAGE_KEYS} from '../constants/common.constants'
 
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
   const [isDark, setIsDark] = useState(() => {
-    const saved = sessionStorage.getItem(THEME_KEY);
+    const saved = sessionStorage.getItem(STORAGE_KEYS.THEME_KEY);
     return saved ? JSON.parse(saved) : true;
   });
 
   useEffect(() => {
-    sessionStorage.setItem(THEME_KEY, JSON.stringify(isDark));
+    sessionStorage.setItem(STORAGE_KEYS.THEME_KEY, JSON.stringify(isDark));
     document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
   }, [isDark]);
 

@@ -31,11 +31,11 @@ export const WIN_CONDITIONS = {
 };
 
 export const STORAGE_KEYS = {
-  GAME_STATE: 'rps_game_state'
+  GAME_STATE: 'rps_game_state',
+  THEME_KEY:'theme'
 };
 
 
-export const THEME_KEY='theme';
 export const TIME_CONSTANTS = {
   CHALLENGE_EXPIRY: 2 * 60 * 1000, 
   GAME_SESSION_CHECK_INTERVAL: 3000,
@@ -104,7 +104,7 @@ export const DEFAULT_STATE = {
 };
 
 
-  export const choices = [
+  export const CHOICES = [
     { id: 'rock', emoji: '🪨', name: 'Rock' },
     { id: 'paper', emoji: '📄', name: 'Paper' },
     { id: 'scissors', emoji: '✂️', name: 'Scissors' }
