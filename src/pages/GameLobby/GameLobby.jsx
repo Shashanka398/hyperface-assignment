@@ -18,7 +18,7 @@ import {
   CardEmptyState,
   OverlayLoading,
 } from "../../components/ui";
-import { TIME_CONSTANTS, ERROR_MESSAGES, NOTIFICATION_MESSAGES } from "../../constants/common.constants.js";
+import { TIME_CONSTANTS, ERROR_MESSAGES, NOTIFICATION_MESSAGES, STORAGE_KEYS } from "../../constants/common.constants.js";
 import OnlinePlayers from "./OnlinePlayer";
 import LeaderBoard from "./LeaderBoard";
 import PendingChallenges from "./PendingChallenges";
@@ -169,7 +169,7 @@ const GameLobby = () => {
         const currentState = gameState.getState();
         window.dispatchEvent(
           new StorageEvent("storage", {
-            key: GAME_,
+            key: STORAGE_KEYS.GAME_STATE,
             newValue: JSON.stringify(currentState),
           })
         );
